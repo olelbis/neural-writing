@@ -4,6 +4,9 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+### Added
+- Social share row below the footer (X, WhatsApp, LinkedIn, Reddit) with a friendly, non-corporate invite line and pre-filled share text.
+
 ### Fixed
 - Layout shift bug: the page was vertically centered, so when generated text wrapped to a different number of lines across languages (especially Chinese, Arabic, Hebrew), the whole layout — including the network diagram — would jump up or down. Anchored the page to the top instead and reserved more height for the text area.
 

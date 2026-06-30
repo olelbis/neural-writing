@@ -48,6 +48,6 @@ The generated sentence is an original, secular message about peace, brotherhood,
 
 ## Footer
 
-A small credit links back to this repository, alongside a visit counter powered by [Abacus](https://abacus.jasoncameron.dev) (a free, signup-free counting API). The counter fails silently if the service is unreachable.
+A small credit links back to this repository, alongside a visit counter powered by [Abacus](https://abacus.jasoncameron.dev) (a free, signup-free counting API). The counter fails silently if the service is unreachable. Below that, a one-line invite links to X, WhatsApp, LinkedIn, and Reddit with pre-filled share text.
 
 Respects `prefers-reduced-motion` throughout — particles, glow, and the play/pause default state all account for it.

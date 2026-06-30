@@ -226,6 +226,29 @@
   .footer .dot{
     opacity:0.5;
   }
+  .share-row{
+    margin-top:10px;
+    font-size:11px;
+    color:var(--ink-mute);
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:10px;
+    opacity:0.7;
+  }
+  .share-line{
+    font-style:italic;
+  }
+  .share-row a{
+    color:var(--ink-mute);
+    text-decoration:none;
+    border-bottom:1px solid transparent;
+    transition:color 0.2s ease, border-color 0.2s ease;
+  }
+  .share-row a:hover{
+    color:var(--ember);
+    border-color:var(--ember-dim);
+  }
   .output-label{
     font-size:11px;
     letter-spacing:0.14em;
@@ -325,6 +348,14 @@
     <a href="https://github.com/olelbis/neural-writing" target="_blank" rel="noopener noreferrer">github.com/olelbis/neural-writing</a>
     <span class="dot">·</span>
     <span id="visits"></span>
+  </div>
+
+  <div class="share-row">
+    <span class="share-line">enjoyed watching a neural network think? pass it on —</span>
+    <a href="https://twitter.com/intent/tweet?text=Watching%20a%20neural%20network%20think%20in%2011%20languages%2C%20kinda%20mesmerizing&url=https%3A%2F%2Folelbis.github.io%2Fneural-writing%2F" target="_blank" rel="noopener noreferrer">X</a>
+    <a href="https://wa.me/?text=Watching%20a%20neural%20network%20think%20in%2011%20languages%2C%20kinda%20mesmerizing%20https%3A%2F%2Folelbis.github.io%2Fneural-writing%2F" target="_blank" rel="noopener noreferrer">WhatsApp</a>
+    <a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Folelbis.github.io%2Fneural-writing%2F" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+    <a href="https://reddit.com/submit?url=https%3A%2F%2Folelbis.github.io%2Fneural-writing%2F&title=Language%20synthesis" target="_blank" rel="noopener noreferrer">Reddit</a>
   </div>
 </div>
 
