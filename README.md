@@ -1,18 +1,37 @@
-# Sintesi del linguaggio
+# Language synthesis
 
-Un'animazione che mostra in modo evocativo cosa "succede" dentro una rete neurale mentre genera testo: impulsi che attraversano i livelli e si trasformano in parole.
+An animation that gives a sense of what happens inside a neural network while it writes text: pulses travel through the layers and transduce into words at the output.
 
-HTML/CSS/JS puro, nessuna dipendenza da installare.
+Pure HTML/CSS/JS, no build step, no dependencies to install.
 
-## Demo
+## Live demo
 
-Dopo aver attivato GitHub Pages (vedi sotto), la demo sarà visibile su:
-`https://TUO-USERNAME.github.io/NOME-REPO/`
+`https://olelbis.github.io/neural-writing/`
 
-## Pubblicare con GitHub Pages
+## What it shows
 
-1. Crea un nuovo repository su GitHub (pubblico).
-2. Carica `index.html` nella root del repository (drag & drop dalla pagina del repo, oppure via git).
-3. Vai su **Settings → Pages**.
-4. In "Source" scegli il branch `main` e la cartella `/ (root)`.
-5. Salva: dopo un paio di minuti il sito sarà online all'URL indicato sopra.
+- A layered node graph (context → attention → processing → projection → token). Faint ambient connections simulate background neural activity.
+- A signal pulse travels an actual path through the network, lighting up the synapses it crosses.
+- When the pulse reaches the output node, a word appears in the generated text below, with a brief amber flash — the moment the signal becomes language.
+
+## Internationalization
+
+On load, the page reads the browser's locale (`navigator.languages`) and opens in the matching language if supported, defaulting to English otherwise. The sentence then cycles automatically through eleven languages, each with its own flag, layer labels, caption text, and (where relevant) script-specific typography:
+
+| Language | Code | Word separation | Direction | Notes |
+|---|---|---|---|---|
+| Italian | `it` | space-separated | LTR | |
+| English | `en` | space-separated | LTR | |
+| Spanish | `es` | space-separated | LTR | |
+| German | `de` | space-separated | LTR | |
+| Portuguese | `pt` | space-separated | LTR | European Portuguese |
+| Portuguese (Brazil) | `pt-br` | space-separated | LTR | Brazilian phrasing and vocabulary |
+| Korean | `ko` | space-separated | LTR | Korean uses word spacing, unlike Chinese/Japanese |
+| Chinese | `zh` | character-by-character | LTR | No spaces — standard for Chinese text |
+| Japanese | `ja` | character-by-character | LTR | No spaces — standard for Japanese text |
+| Hebrew | `he` | space-separated | RTL | |
+| Arabic | `ar` | space-separated | RTL | |
+
+Locale detection checks the full tag first (e.g. `pt-BR`) before falling back to the language prefix (e.g. `pt`), so European and Brazilian Portuguese resolve correctly.
+
+Respects `prefers-reduced-motion`.

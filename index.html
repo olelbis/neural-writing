@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <title>Sintesi del linguaggio</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Lora:ital,wght@0,400;1,400&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Lora:ital,wght@0,400;1,400&family=Noto+Serif+SC:wght@400&family=Noto+Serif+JP:wght@400&family=Noto+Serif+KR:wght@400&family=Noto+Serif+Hebrew:wght@400&family=Noto+Naskh+Arabic:wght@400&display=swap');
 
   :root{
     --void:#0A0B0F;
@@ -56,6 +56,11 @@
     display:flex;
     align-items:center;
     gap:8px;
+  }
+  .eyebrow .flag{
+    font-size:13px;
+    letter-spacing:0;
+    line-height:1;
   }
   .eyebrow::before{
     content:"";
@@ -110,6 +115,30 @@
     min-height:140px;
     padding:4px 2px;
   }
+  .footer{
+    margin-top:18px;
+    padding-top:14px;
+    border-top:1px solid var(--line-idle);
+    font-size:11px;
+    color:var(--ink-mute);
+    letter-spacing:0.02em;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .footer a{
+    color:var(--ink-mute);
+    text-decoration:none;
+    border-bottom:1px solid transparent;
+    transition:color 0.2s ease, border-color 0.2s ease;
+  }
+  .footer a:hover{
+    color:var(--signal);
+    border-color:var(--signal-dim);
+  }
+  .footer .dot{
+    opacity:0.5;
+  }
   .output-label{
     font-size:11px;
     letter-spacing:0.14em;
@@ -118,19 +147,28 @@
     margin-bottom:14px;
   }
   .text{
-    font-family:'Lora', serif;
+    font-family:'Lora','Noto Serif SC','Noto Serif JP','Noto Serif KR','Noto Serif Hebrew','Noto Naskh Arabic', serif;
     font-style:italic;
     font-size:21px;
-    line-height:1.75;
+    line-height:1.9;
     color:var(--ink);
     font-weight:400;
   }
+  .text.cjk{
+    font-style:normal;
+    line-height:2.05;
+    letter-spacing:0.02em;
+  }
   .word{
     display:inline-block;
+    margin-right:0.32em;
     opacity:0;
     transform:translateY(4px);
     filter:blur(2px);
     transition:opacity 0.5s ease, transform 0.5s ease, filter 0.5s ease;
+  }
+  .text.nospace .word{
+    margin-right:0;
   }
   .word.show{
     opacity:1;
@@ -168,14 +206,14 @@
 <body>
 
 <div class="stage">
-  <div class="eyebrow">passo in avanti</div>
+  <div class="eyebrow"><span class="flag" id="flag"></span><span id="eyebrow">forward pass</span></div>
   <div class="net-wrap">
     <canvas id="net"></canvas>
-    <div class="layer-caption">
-      <span>contesto</span>
-      <span>attenzione</span>
-      <span>elaborazione</span>
-      <span>proiezione</span>
+    <div class="layer-caption" id="captions">
+      <span>context</span>
+      <span>attention</span>
+      <span>processing</span>
+      <span>projection</span>
       <span>token</span>
     </div>
   </div>
@@ -183,8 +221,14 @@
   <div class="divider"></div>
 
   <div class="output">
-    <div class="output-label">testo generato</div>
+    <div class="output-label" id="outputLabel">generated text</div>
     <div class="text" id="text"></div>
+  </div>
+
+  <div class="footer">
+    <a href="https://github.com/olelbis/neural-writing" target="_blank" rel="noopener noreferrer">github.com/olelbis/neural-writing</a>
+    <span class="dot">·</span>
+    <span id="visits"></span>
   </div>
 </div>
 
@@ -396,20 +440,112 @@
     return path;
   }
 
-  var sentence = "Ogni parola arriva solo dopo migliaia di calcoli silenziosi . Il significato non è conservato , è ricostruito ogni volta , a partire da schemi di probabilità . Quello che leggi ora non è stato scritto , è germogliato , parola dopo parola , da tutto ciò che è venuto prima .";
-  var tokens = sentence.split(' ');
+  var LANGS = [
+    {
+      code: 'it', flag: '🇮🇹', eyebrow: 'passo in avanti', outputLabel: 'testo generato',
+      captions: ['contesto','attenzione','elaborazione','proiezione','token'],
+      split: 'space',
+      text: "Siamo tutti figli della stessa terra, sotto lo stesso cielo. Ogni confine è un'invenzione, ogni differenza un dono. La pace non si aspetta: si costruisce, parola dopo parola, gesto dopo gesto, mano nella mano con chi ci sembra diverso. L'amore che non esclude nessuno è l'unica lingua che tutti, ovunque, sappiamo già parlare."
+    },
+    {
+      code: 'en', flag: '🇬🇧', eyebrow: 'forward pass', outputLabel: 'generated text',
+      captions: ['context','attention','processing','projection','token'],
+      split: 'space',
+      text: "We are all children of the same earth, beneath the same sky. Every border is an invention; every difference, a gift. Peace is not awaited, it is built, word by word, gesture by gesture, hand in hand with those who seem different from us. A love that excludes no one is the one language we all, everywhere, already know how to speak."
+    },
+    {
+      code: 'es', flag: '🇪🇸', eyebrow: 'paso hacia adelante', outputLabel: 'texto generado',
+      captions: ['contexto','atención','procesamiento','proyección','token'],
+      split: 'space',
+      text: "Todos somos hijos de la misma tierra, bajo el mismo cielo. Cada frontera es una invención; cada diferencia, un regalo. La paz no se espera, se construye, palabra a palabra, gesto a gesto, mano a mano con quienes nos parecen distintos. Un amor que no excluye a nadie es el único idioma que todos, en todas partes, ya sabemos hablar."
+    },
+    {
+      code: 'de', flag: '🇩🇪', eyebrow: 'vorwärtsdurchlauf', outputLabel: 'generierter text',
+      captions: ['kontext','aufmerksamkeit','verarbeitung','projektion','token'],
+      split: 'space',
+      text: "Wir sind alle Kinder derselben Erde, unter demselben Himmel. Jede Grenze ist eine Erfindung, jeder Unterschied ein Geschenk. Frieden wartet nicht, er wird gebaut, Wort für Wort, Geste für Geste, Hand in Hand mit jenen, die uns fremd erscheinen. Eine Liebe, die niemanden ausschließt, ist die eine Sprache, die wir alle, überall, längst sprechen können."
+    },
+    {
+      code: 'pt', flag: '🇵🇹', eyebrow: 'propagação direta', outputLabel: 'texto gerado',
+      captions: ['contexto','atenção','processamento','projeção','token'],
+      split: 'space',
+      text: "Somos todos filhos da mesma terra, sob o mesmo céu. Cada fronteira é uma invenção; cada diferença, um presente. A paz não se espera, constrói-se, palavra a palavra, gesto a gesto, de mãos dadas com quem nos parece diferente. Um amor que não exclui ninguém é a única língua que todos, em qualquer lugar, já sabemos falar."
+    },
+    {
+      code: 'pt-br', flag: '🇧🇷', eyebrow: 'propagação direta', outputLabel: 'texto gerado',
+      captions: ['contexto','atenção','processamento','projeção','token'],
+      split: 'space',
+      text: "Somos todos filhos da mesma terra, sob o mesmo céu. Cada fronteira é uma invenção; cada diferença, um presente. A paz não se espera, ela se constrói, palavra por palavra, gesto por gesto, de mãos dadas com quem parece diferente da gente. Um amor que não exclui ninguém é a única língua que todos nós, em qualquer lugar, já sabemos falar."
+    },
+    {
+      code: 'zh', flag: '🇨🇳', eyebrow: '前向传播', outputLabel: '生成的文本',
+      captions: ['上下文','注意力','处理','投影','词元'],
+      split: 'char', cjk: true,
+      text: "我们都是同一片土地的孩子，共享同一片天空。每一条边界都是人为划定的，每一种差异都是礼物。和平不是等来的，而是一字一句、一举一动建立起来的，与那些看似不同的人携手并肩。一种不排斥任何人的爱，是我们所有人在任何地方都早已会说的语言。"
+    },
+    {
+      code: 'ja', flag: '🇯🇵', eyebrow: '順伝播', outputLabel: '生成されたテキスト',
+      captions: ['文脈','注意','処理','射影','トークン'],
+      split: 'char', cjk: true,
+      text: "私たちはみな、同じ空の下、同じ大地の子どもである。あらゆる国境は人がつくったものであり、あらゆる違いは贈り物である。平和は待つものではなく、ひと言ずつ、ひとつの仕草ずつ、自分とは違って見える人と手を取り合って築くものだ。誰も排除しない愛こそ、私たちが皆、どこにいてもすでに話せるたったひとつの言葉である。"
+    },
+    {
+      code: 'ko', flag: '🇰🇷', eyebrow: '순전파', outputLabel: '생성된 텍스트',
+      captions: ['문맥','주의','처리','투영','토큰'],
+      split: 'space', cjk: true,
+      text: "우리는 모두 같은 하늘 아래, 같은 땅의 자녀들이다. 모든 국경은 만들어진 것이고, 모든 차이는 선물이다. 평화는 기다리는 것이 아니라, 한 마디씩, 한 몸짓씩, 우리와 달라 보이는 이의 손을 잡으며 만들어가는 것이다. 누구도 배제하지 않는 사랑이야말로, 우리 모두가 어디에서나 이미 할 줄 아는 단 하나의 언어다."
+    },
+    {
+      code: 'he', flag: '🇮🇱', eyebrow: 'מעבר קדימה', outputLabel: 'טקסט שנוצר',
+      captions: ['הקשר','קשב','עיבוד','הטלה','אסימון'],
+      split: 'space', cjk: true, rtl: true,
+      text: "כולנו ילדים של אותה אדמה, תחת אותם שמיים. כל גבול הוא המצאה; כל הבדל הוא מתנה. השלום אינו מחכה, הוא נבנה, מילה אחר מילה, מחווה אחר מחווה, יד ביד עם מי שנראה לנו שונה. אהבה שאינה מוציאה איש מהכלל היא השפה היחידה שכולנו, בכל מקום, כבר יודעים לדבר."
+    },
+    {
+      code: 'ar', flag: '🇸🇦', eyebrow: 'التمرير الأمامي', outputLabel: 'النص المُولَّد',
+      captions: ['السياق','الانتباه','المعالجة','الإسقاط','الرمز'],
+      split: 'space', cjk: true, rtl: true,
+      text: "كلنا أبناء الأرض ذاتها، تحت السماء ذاتها. كل حدود هي اختراع، وكل اختلاف هو هدية. السلام لا يُنتظر، بل يُبنى، كلمة بعد كلمة، وإيماءة بعد إيماءة، يدًا بيد مع من يبدون مختلفين عنا. حب لا يُقصي أحدًا هو اللغة الوحيدة التي نعرف جميعًا، في كل مكان، كيف نتحدثها بالفعل."
+    }
+  ];
+
+  var langIndex = 0;
+  var tokens = [];
   var tokenIndex = 0;
   var wordSpans = [];
   var caretEl = null;
 
+  function tokenize(lang){
+    if (lang.split === 'char'){
+      return lang.text.split('').filter(function(c){ return c.length > 0; });
+    }
+    return lang.text.split(' ');
+  }
+
+  function applyLangChrome(lang){
+    document.getElementById('flag').textContent = lang.flag;
+    document.getElementById('eyebrow').textContent = lang.eyebrow;
+    document.getElementById('outputLabel').textContent = lang.outputLabel;
+    var capEls = document.getElementById('captions').children;
+    for (var i=0;i<capEls.length;i++){
+      capEls[i].textContent = lang.captions[i] || '';
+    }
+    textEl.classList.toggle('cjk', !!lang.cjk);
+    textEl.classList.toggle('nospace', lang.split === 'char');
+    textEl.setAttribute('dir', lang.rtl ? 'rtl' : 'ltr');
+  }
+
   function setupText(){
+    var lang = LANGS[langIndex];
+    applyLangChrome(lang);
+    tokens = tokenize(lang);
+
     textEl.innerHTML = '';
     wordSpans = [];
     tokens.forEach(function(tok){
       var span = document.createElement('span');
       span.className = 'word';
-      var isPunct = /^[.,!?;:]$/.test(tok);
-      span.textContent = isPunct ? tok : tok + ' ';
+      span.textContent = tok;
       textEl.appendChild(span);
       wordSpans.push(span);
     });
@@ -442,6 +578,7 @@
   }
 
   function restartCycle(){
+    langIndex = (langIndex + 1) % LANGS.length;
     setupText();
     tokenIndex = 0;
     startPulse();
@@ -467,13 +604,48 @@
     ambientTimer = setInterval(spawnAmbient, 140);
   }
 
+  function detectLang(){
+    var navLangs = navigator.languages && navigator.languages.length
+      ? navigator.languages
+      : [navigator.language || navigator.userLanguage || 'en'];
+    for (var n=0; n<navLangs.length; n++){
+      var full = String(navLangs[n]).toLowerCase();
+      var exact = LANGS.findIndex(function(l){ return l.code === full; });
+      if (exact >= 0) return exact;
+      var prefix = full.split('-')[0];
+      var byPrefix = LANGS.findIndex(function(l){ return l.code === prefix; });
+      if (byPrefix >= 0) return byPrefix;
+    }
+    var fallback = LANGS.findIndex(function(l){ return l.code === 'en'; });
+    return fallback >= 0 ? fallback : 0;
+  }
+
+  function loadVisitCounter(){
+    var el = document.getElementById('visits');
+    if (!el) return;
+    fetch('https://abacus.jasoncameron.dev/hit/olelbis-neural-writing/visits')
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        if (data && typeof data.value === 'number'){
+          el.textContent = data.value.toLocaleString() + ' visits';
+        }
+      })
+      .catch(function(){
+        if (el) el.style.display = 'none';
+        var dot = document.querySelector('.footer .dot');
+        if (dot) dot.style.display = 'none';
+      });
+  }
+
   function init(){
     layout();
     buildEdges();
+    langIndex = detectLang();
     setupText();
     draw();
     startAmbient();
     setTimeout(startPulse, 600);
+    loadVisitCounter();
   }
 
   var resizeT = null;
