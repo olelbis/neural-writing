@@ -2,7 +2,7 @@
 
 All notable changes to this project are documented here.
 
-## [Unreleased]
+## [1.5.0] — 2026-06-30 — Sharing and layout stability
 
 ### Added
 - Social share row (X, LinkedIn, Reddit) with a friendly, non-corporate invite line and pre-filled share text, merged into the same footer line as the repo credit and visit counter.
@@ -10,7 +10,7 @@ All notable changes to this project are documented here.
 ### Fixed
 - `overflow:hidden` on `html,body` was clipping content taller than the viewport — as controls, footer, and the share row were added, the page outgrew a single screen height and the bottom was getting cut off entirely. Switched to natural scrolling.
 - Layout shift bug: the page was vertically centered, so when generated text wrapped to a different number of lines across languages (especially Chinese, Arabic, Hebrew), the whole layout — including the network diagram — would jump up or down. Anchored the page to the top instead and reserved more height for the text area.
-- Footer still shifting between languages after the above fix: switched from a one-shot upfront measurement to a height ratchet — a `ResizeObserver` on the live text element grows the reserved space to the tallest height ever seen and never shrinks it, so timing issues with web font loading (which could throw off the initial estimate) self-correct instead of causing a persistent jump.
+- Footer still shifting for Japanese and Korean specifically: `document.fonts.ready` can resolve before those (large) font files are actually requested, since the hidden measuring clone clears its content again before the browser commits to downloading them. Replaced it with explicit `document.fonts.load()` calls using real sample characters for every non-Latin script, then re-measure once those are confirmed loaded.
 
 ## [1.4.0] — 2026-06-30 — Ambient background
 

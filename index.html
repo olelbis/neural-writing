@@ -850,6 +850,25 @@
     ro.observe(textEl);
   }
 
+  function preloadScriptFonts(){
+    if (!document.fonts || !document.fonts.load) return Promise.resolve();
+    var jobs = [
+      ["21px 'Noto Serif SC'", "概率每词构建语言模式"],
+      ["21px 'Noto Serif JP'", "言葉確率構築模様毎度"],
+      ["21px 'Noto Serif KR'", "확률단어언어구축모든"],
+      ["21px 'Noto Serif Hebrew'", "שלום אהבה שפה מילה"],
+      ["21px 'Noto Naskh Arabic'", "سلام حب لغة كلمة"]
+    ];
+    var promises = jobs.map(function(j){
+      try{
+        return document.fonts.load(j[0], j[1]).catch(function(){});
+      } catch(e){
+        return Promise.resolve();
+      }
+    });
+    return Promise.all(promises);
+  }
+
   function layoutBg(){
     bgDPR = Math.min(window.devicePixelRatio || 1, 2);
     bgW = window.innerWidth;
@@ -940,9 +959,7 @@
     buildBgField();
     drawBg();
 
-    if (document.fonts && document.fonts.ready){
-      document.fonts.ready.then(reserveOutputHeight);
-    }
+    preloadScriptFonts().then(reserveOutputHeight);
   }
 
   var resizeT = null;

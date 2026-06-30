@@ -1,6 +1,6 @@
 # Backlog
 
-Ideas discussed but not yet implemented. When one gets picked up, move it into `CHANGELOG.md` under `[Unreleased]`, then promote it to a numbered version once published.
+Ideas discussed but not yet implemented. When one gets picked up, add it directly as a new dated, numbered version in `CHANGELOG.md` once it's implemented and pushed — no staging section.
 
 ## Proposed
 
