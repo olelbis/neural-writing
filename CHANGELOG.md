@@ -4,6 +4,9 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+### Fixed
+- Layout shift bug: the page was vertically centered, so when generated text wrapped to a different number of lines across languages (especially Chinese, Arabic, Hebrew), the whole layout — including the network diagram — would jump up or down. Anchored the page to the top instead and reserved more height for the text area.
+
 ## [1.4.0] — 2026-06-30 — Ambient background
 
 ### Added
