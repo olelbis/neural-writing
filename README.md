@@ -13,6 +13,12 @@ Pure HTML/CSS/JS, no build step, no dependencies to install.
 - A layered node graph (context → attention → processing → projection → token). Faint ambient connections simulate background neural activity.
 - A signal pulse travels an actual path through the network, lighting up the synapses it crosses.
 - When the pulse reaches the output node, a word appears in the generated text below, with a brief amber flash — the moment the signal becomes language.
+- A sparse field of slow-drifting particles and a barely-visible drifting glow sit behind the whole page, not just the diagram, for ambient depth.
+
+## Controls
+
+- **Flag row** — click a flag to jump straight to that language instead of waiting for the auto-cycle.
+- **Play / pause** — freezes the pulse, the ambient network activity, and the word reveal in place.
 
 ## Internationalization
 
@@ -34,4 +40,14 @@ On load, the page reads the browser's locale (`navigator.languages`) and opens i
 
 Locale detection checks the full tag first (e.g. `pt-BR`) before falling back to the language prefix (e.g. `pt`), so European and Brazilian Portuguese resolve correctly.
 
-Respects `prefers-reduced-motion`.
+The generated sentence is an original, secular message about peace, brotherhood, and universal love — adapted (not translated word-for-word) into each language.
+
+## Sharing
+
+`og-image.png` plus Open Graph / Twitter Card meta tags give shared links a proper preview image instead of a bare URL.
+
+## Footer
+
+A small credit links back to this repository, alongside a visit counter powered by [Abacus](https://abacus.jasoncameron.dev) (a free, signup-free counting API). The counter fails silently if the service is unreachable.
+
+Respects `prefers-reduced-motion` throughout — particles, glow, and the play/pause default state all account for it.
