@@ -2,7 +2,17 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8">
-<title>Sintesi del linguaggio</title>
+<title>Language synthesis</title>
+<meta name="description" content="An animation visualizing what a neural network does while it writes text, in 11 languages.">
+<meta property="og:title" content="Language synthesis">
+<meta property="og:description" content="An animation visualizing what a neural network does while it writes text, in 11 languages.">
+<meta property="og:image" content="https://olelbis.github.io/neural-writing/og-image.png">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://olelbis.github.io/neural-writing/">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Language synthesis">
+<meta name="twitter:description" content="An animation visualizing what a neural network does while it writes text, in 11 languages.">
+<meta name="twitter:image" content="https://olelbis.github.io/neural-writing/og-image.png">
 <style>
   @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Lora:ital,wght@0,400;1,400&family=Noto+Serif+SC:wght@400&family=Noto+Serif+JP:wght@400&family=Noto+Serif+KR:wght@400&family=Noto+Serif+Hebrew:wght@400&family=Noto+Naskh+Arabic:wght@400&display=swap');
 
@@ -46,13 +56,68 @@
     gap:0;
   }
 
+  .header-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:10px;
+    flex-wrap:wrap;
+  }
+  .controls{
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .lang-row{
+    display:flex;
+    gap:4px;
+  }
+  .lang-btn{
+    background:none;
+    border:none;
+    padding:3px 4px;
+    font-size:13px;
+    line-height:1;
+    cursor:pointer;
+    border-radius:3px;
+    opacity:0.4;
+    filter:grayscale(60%);
+    transition:opacity 0.2s ease, filter 0.2s ease, background 0.2s ease;
+  }
+  .lang-btn:hover{
+    opacity:0.85;
+    filter:grayscale(0%);
+    background:rgba(255,255,255,0.05);
+  }
+  .lang-btn.active{
+    opacity:1;
+    filter:grayscale(0%);
+    background:rgba(110,231,216,0.10);
+  }
+  .play-btn{
+    background:none;
+    border:1px solid var(--line-idle-strong);
+    color:var(--ink-mute);
+    font-size:9px;
+    letter-spacing:0.04em;
+    padding:5px 8px;
+    border-radius:3px;
+    cursor:pointer;
+    font-family:'JetBrains Mono',monospace;
+    transition:color 0.2s ease, border-color 0.2s ease;
+  }
+  .play-btn:hover{
+    color:var(--signal);
+    border-color:var(--signal-dim);
+  }
   .eyebrow{
     font-size:11px;
     letter-spacing:0.18em;
     text-transform:uppercase;
     color:var(--signal);
     opacity:0.75;
-    margin:0 0 10px 2px;
+    margin:0;
     display:flex;
     align-items:center;
     gap:8px;
@@ -206,7 +271,13 @@
 <body>
 
 <div class="stage">
-  <div class="eyebrow"><span class="flag" id="flag"></span><span id="eyebrow">forward pass</span></div>
+  <div class="header-row">
+    <div class="eyebrow"><span class="flag" id="flag"></span><span id="eyebrow">forward pass</span></div>
+    <div class="controls">
+      <div class="lang-row" id="langRow"></div>
+      <button class="play-btn" id="playBtn" type="button" aria-label="Pause">❚❚</button>
+    </div>
+  </div>
   <div class="net-wrap">
     <canvas id="net"></canvas>
     <div class="layer-caption" id="captions">
@@ -347,7 +418,7 @@
     edges.forEach(function(e){
       var a = layers[e.l1][e.i1];
       var b = layers[e.l2][e.i2];
-      e.activation *= 0.94;
+      if (!paused) e.activation *= 0.94;
       var alpha = 0.06 + e.activation*0.5;
       ctx.strokeStyle = e.activation > 0.05
         ? 'rgba(110,231,216,' + Math.min(0.85, alpha) + ')'
@@ -361,7 +432,7 @@
 
     layers.forEach(function(nodes, li){
       nodes.forEach(function(n){
-        n.glow *= 0.92;
+        if (!paused) n.glow *= 0.92;
         var isOutput = li === layers.length-1;
         var color = isOutput
           ? 'rgba(242,166,90,ALPHA)'
@@ -371,6 +442,7 @@
     });
 
     ambientPulses.forEach(function(p, idx){
+      if (paused) return;
       p.t += p.speed;
       var pos = pointOn(p.edge, p.t);
       ctx.beginPath();
@@ -385,7 +457,7 @@
 
     if (activePulse){
       var ap = activePulse;
-      ap.t += ap.speed;
+      if (!paused) ap.t += ap.speed;
       var seg = ap.path[ap.seg];
       var pos2 = pointOn(seg, Math.min(1, ap.t));
       seg.activation = 1;
@@ -533,6 +605,40 @@
     textEl.classList.toggle('cjk', !!lang.cjk);
     textEl.classList.toggle('nospace', lang.split === 'char');
     textEl.setAttribute('dir', lang.rtl ? 'rtl' : 'ltr');
+    updateActiveLangButton();
+  }
+
+  function buildLangRow(){
+    var row = document.getElementById('langRow');
+    row.innerHTML = '';
+    LANGS.forEach(function(lang, i){
+      var btn = document.createElement('button');
+      btn.className = 'lang-btn';
+      btn.type = 'button';
+      btn.textContent = lang.flag;
+      btn.setAttribute('aria-label', lang.code);
+      btn.addEventListener('click', function(){
+        selectLanguage(i);
+      });
+      row.appendChild(btn);
+    });
+  }
+
+  function updateActiveLangButton(){
+    var row = document.getElementById('langRow');
+    if (!row) return;
+    var btns = row.children;
+    for (var i=0;i<btns.length;i++){
+      btns[i].classList.toggle('active', i === langIndex);
+    }
+  }
+
+  function selectLanguage(i){
+    if (i === langIndex) return;
+    langIndex = i;
+    setupText();
+    tokenIndex = 0;
+    startPulse();
   }
 
   function setupText(){
@@ -578,6 +684,7 @@
   }
 
   function restartCycle(){
+    if (paused){ setTimeout(restartCycle, 200); return; }
     langIndex = (langIndex + 1) % LANGS.length;
     setupText();
     tokenIndex = 0;
@@ -585,6 +692,7 @@
   }
 
   function startPulse(){
+    if (paused){ setTimeout(startPulse, 200); return; }
     var path = buildPath();
     if (path.length === 0){
       setTimeout(startPulse, 50);
@@ -599,9 +707,25 @@
   }
 
   var ambientTimer = null;
+  var paused = false;
+
   function startAmbient(){
     if (reduceMotion) return;
-    ambientTimer = setInterval(spawnAmbient, 140);
+    ambientTimer = setInterval(function(){
+      if (!paused) spawnAmbient();
+    }, 140);
+  }
+
+  function togglePause(){
+    paused = !paused;
+    var btn = document.getElementById('playBtn');
+    if (paused){
+      btn.textContent = '▶';
+      btn.setAttribute('aria-label', 'Play');
+    } else {
+      btn.textContent = '❚❚';
+      btn.setAttribute('aria-label', 'Pause');
+    }
   }
 
   function detectLang(){
@@ -641,11 +765,13 @@
     layout();
     buildEdges();
     langIndex = detectLang();
+    buildLangRow();
     setupText();
     draw();
     startAmbient();
     setTimeout(startPulse, 600);
     loadVisitCounter();
+    document.getElementById('playBtn').addEventListener('click', togglePause);
   }
 
   var resizeT = null;
