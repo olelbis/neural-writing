@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<title>Sintesi del linguaggio</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Lora:ital,wght@0,400;1,400&display=swap');
+
+  :root{
+    --void:#0A0B0F;
+    --void-2:#11131A;
+    --line-idle:rgba(255,255,255,0.055);
+    --line-idle-strong:rgba(255,255,255,0.10);
+    --signal:#6EE7D8;
+    --signal-dim:rgba(110,231,216,0.35);
+    --ember:#F2A65A;
+    --ember-dim:rgba(242,166,90,0.35);
+    --ink:#ECEAE3;
+    --ink-mute:#8A93A6;
+    --caret:#F2A65A;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0;padding:0;
+    background:var(--void);
+    color:var(--ink);
+    width:100%;height:100%;
+    overflow:hidden;
+  }
+  body{
+    font-family:'JetBrains Mono',monospace;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    min-height:100vh;
+    padding:32px 16px;
+  }
+
+  .stage{
+    width:100%;
+    max-width:880px;
+    display:flex;
+    flex-direction:column;
+    gap:0;
+  }
+
+  .eyebrow{
+    font-size:11px;
+    letter-spacing:0.18em;
+    text-transform:uppercase;
+    color:var(--signal);
+    opacity:0.75;
+    margin:0 0 10px 2px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .eyebrow::before{
+    content:"";
+    width:6px;height:6px;
+    border-radius:50%;
+    background:var(--signal);
+    box-shadow:0 0 8px 1px var(--signal-dim);
+    animation:blink 1.6s ease-in-out infinite;
+  }
+  @keyframes blink{
+    0%,100%{opacity:1;}
+    50%{opacity:0.25;}
+  }
+
+  .net-wrap{
+    position:relative;
+    width:100%;
+    aspect-ratio: 880 / 380;
+    background:
+      radial-gradient(ellipse at 50% 0%, rgba(110,231,216,0.05), transparent 60%),
+      var(--void-2);
+    border:1px solid var(--line-idle-strong);
+    border-radius:4px;
+    overflow:hidden;
+  }
+  canvas{
+    display:block;
+    width:100%;
+    height:100%;
+  }
+
+  .layer-caption{
+    position:absolute;
+    bottom:8px;
+    left:0; right:0;
+    display:flex;
+    justify-content:space-between;
+    padding:0 18px;
+    font-size:10px;
+    letter-spacing:0.08em;
+    color:var(--ink-mute);
+    pointer-events:none;
+  }
+
+  .divider{
+    height:1px;
+    background:linear-gradient(90deg, transparent, var(--line-idle-strong), transparent);
+    margin:26px 0;
+  }
+
+  .output{
+    min-height:140px;
+    padding:4px 2px;
+  }
+  .output-label{
+    font-size:11px;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:var(--ink-mute);
+    margin-bottom:14px;
+  }
+  .text{
+    font-family:'Lora', serif;
+    font-style:italic;
+    font-size:21px;
+    line-height:1.75;
+    color:var(--ink);
+    font-weight:400;
+  }
+  .word{
+    display:inline-block;
+    opacity:0;
+    transform:translateY(4px);
+    filter:blur(2px);
+    transition:opacity 0.5s ease, transform 0.5s ease, filter 0.5s ease;
+  }
+  .word.show{
+    opacity:1;
+    transform:translateY(0);
+    filter:blur(0);
+  }
+  .word.flash{
+    color:var(--ember);
+  }
+  .caret{
+    display:inline-block;
+    width:9px;
+    height:21px;
+    background:var(--caret);
+    vertical-align:text-bottom;
+    margin-left:2px;
+    animation:caretblink 0.9s step-end infinite;
+  }
+  @keyframes caretblink{
+    0%,49%{opacity:1;}
+    50%,100%{opacity:0;}
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .word{transition:opacity 0.2s ease;}
+    .eyebrow::before{animation:none;}
+    .caret{animation:none;}
+  }
+
+  @media (max-width:600px){
+    .text{font-size:18px;}
+  }
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <div class="eyebrow">passo in avanti</div>
+  <div class="net-wrap">
+    <canvas id="net"></canvas>
+    <div class="layer-caption">
+      <span>contesto</span>
+      <span>attenzione</span>
+      <span>elaborazione</span>
+      <span>proiezione</span>
+      <span>token</span>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="output">
+    <div class="output-label">testo generato</div>
+    <div class="text" id="text"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+
+  var canvas = document.getElementById('net');
+  var ctx = canvas.getContext('2d');
+  var textEl = document.getElementById('text');
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  var LAYER_SIZES = [6, 9, 11, 9, 1];
+  var layers = [];
+  var edges = [];
+
+  var W = 0, H = 0, DPR = 1;
+
+  function layout(){
+    var rect = canvas.parentElement.getBoundingClientRect();
+    DPR = Math.min(window.devicePixelRatio || 1, 2);
+    W = rect.width;
+    H = rect.height;
+    canvas.width = W * DPR;
+    canvas.height = H * DPR;
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+
+    var marginX = 56;
+    var marginY = 30;
+    var usableW = W - marginX*2;
+    var usableH = H - marginY*2 - 22;
+
+    layers = LAYER_SIZES.map(function(count, li){
+      var x = marginX + (usableW * li / (LAYER_SIZES.length - 1));
+      var nodes = [];
+      for (var i=0;i<count;i++){
+        var t = count === 1 ? 0.5 : i/(count-1);
+        var jitter = count === 1 ? 0 : (Math.sin(i*12.9 + li*3.7)*4);
+        var y = marginY + t*usableH + jitter;
+        nodes.push({x:x, y:y, glow:0});
+      }
+      return nodes;
+    });
+  }
+
+  function buildEdges(){
+    edges = [];
+    for (var li=0; li<layers.length-1; li++){
+      var from = layers[li];
+      var to = layers[li+1];
+      for (var i=0;i<from.length;i++){
+        var connections = 2 + Math.floor(Math.random()*2);
+        var used = {};
+        for (var c=0;c<connections;c++){
+          var j = Math.floor(Math.random()*to.length);
+          if (used[j]) continue;
+          used[j] = true;
+          edges.push({
+            l1: li, i1: i,
+            l2: li+1, i2: j,
+            activation: 0
+          });
+        }
+      }
+    }
+  }
+
+  function edgesFrom(li, i){
+    return edges.filter(function(e){ return e.l1===li && e.i1===i; });
+  }
+
+  var ambientPulses = [];
+  var activePulse = null;
+
+  function spawnAmbient(){
+    if (edges.length === 0) return;
+    if (ambientPulses.length > 14) return;
+    var e = edges[Math.floor(Math.random()*edges.length)];
+    ambientPulses.push({
+      edge: e,
+      t: 0,
+      speed: 0.012 + Math.random()*0.012,
+      alpha: 0.18 + Math.random()*0.16
+    });
+  }
+
+  function pointOn(edge, t){
+    var a = layers[edge.l1][edge.i1];
+    var b = layers[edge.l2][edge.i2];
+    var midX = (a.x+b.x)/2;
+    var cx = midX, cy = (a.y+b.y)/2;
+    var x = (1-t)*(1-t)*a.x + 2*(1-t)*t*cx + t*t*b.x;
+    var y = (1-t)*(1-t)*a.y + 2*(1-t)*t*cy + t*t*b.y;
+    return {x:x,y:y};
+  }
+
+  function drawNode(n, color, radius, glowAlpha){
+    if (glowAlpha > 0.01){
+      var grad = ctx.createRadialGradient(n.x,n.y,0,n.x,n.y,radius*4);
+      grad.addColorStop(0, color.replace('ALPHA', glowAlpha*0.5));
+      grad.addColorStop(1, color.replace('ALPHA','0'));
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(n.x,n.y,radius*4,0,Math.PI*2);
+      ctx.fill();
+    }
+    ctx.beginPath();
+    ctx.arc(n.x,n.y,radius,0,Math.PI*2);
+    ctx.fillStyle = color.replace('ALPHA', String(Math.max(0.35, glowAlpha)));
+    ctx.fill();
+  }
+
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+
+    ctx.lineWidth = 1;
+    edges.forEach(function(e){
+      var a = layers[e.l1][e.i1];
+      var b = layers[e.l2][e.i2];
+      e.activation *= 0.94;
+      var alpha = 0.06 + e.activation*0.5;
+      ctx.strokeStyle = e.activation > 0.05
+        ? 'rgba(110,231,216,' + Math.min(0.85, alpha) + ')'
+        : 'rgba(255,255,255,0.055)';
+      ctx.beginPath();
+      ctx.moveTo(a.x,a.y);
+      var midX = (a.x+b.x)/2, midY=(a.y+b.y)/2;
+      ctx.quadraticCurveTo(midX,midY,b.x,b.y);
+      ctx.stroke();
+    });
+
+    layers.forEach(function(nodes, li){
+      nodes.forEach(function(n){
+        n.glow *= 0.92;
+        var isOutput = li === layers.length-1;
+        var color = isOutput
+          ? 'rgba(242,166,90,ALPHA)'
+          : 'rgba(232,230,227,ALPHA)';
+        drawNode(n, color, isOutput ? 5 : 3, n.glow);
+      });
+    });
+
+    ambientPulses.forEach(function(p, idx){
+      p.t += p.speed;
+      var pos = pointOn(p.edge, p.t);
+      ctx.beginPath();
+      ctx.arc(pos.x,pos.y,2,0,Math.PI*2);
+      ctx.fillStyle = 'rgba(110,231,216,' + p.alpha + ')';
+      ctx.fill();
+      if (p.t >= 1){
+        p.edge.activation = Math.min(1, p.edge.activation + 0.4);
+        ambientPulses.splice(idx,1);
+      }
+    });
+
+    if (activePulse){
+      var ap = activePulse;
+      ap.t += ap.speed;
+      var seg = ap.path[ap.seg];
+      var pos2 = pointOn(seg, Math.min(1, ap.t));
+      seg.activation = 1;
+
+      ctx.beginPath();
+      ctx.arc(pos2.x,pos2.y,4.5,0,Math.PI*2);
+      var g = ctx.createRadialGradient(pos2.x,pos2.y,0,pos2.x,pos2.y,16);
+      g.addColorStop(0,'rgba(110,231,216,0.9)');
+      g.addColorStop(1,'rgba(110,231,216,0)');
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(pos2.x,pos2.y,16,0,Math.PI*2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(pos2.x,pos2.y,4,0,Math.PI*2);
+      ctx.fillStyle = '#6EE7D8';
+      ctx.fill();
+
+      var fromNode = layers[seg.l1][seg.i1];
+      fromNode.glow = Math.max(fromNode.glow, 0.6);
+
+      if (ap.t >= 1){
+        ap.t = 0;
+        ap.seg += 1;
+        var toNode = layers[seg.l2][seg.i2];
+        toNode.glow = 1;
+        if (ap.seg >= ap.path.length){
+          onTokenReached();
+          activePulse = null;
+        }
+      }
+    }
+
+    requestAnimationFrame(draw);
+  }
+
+  function buildPath(){
+    var path = [];
+    var li = 0, idx = Math.floor(Math.random()*layers[0].length);
+    while (li < layers.length-1){
+      var options = edgesFrom(li, idx);
+      if (options.length === 0){
+        idx = Math.floor(Math.random()*layers[li+1].length);
+        li++;
+        continue;
+      }
+      var chosen = options[Math.floor(Math.random()*options.length)];
+      path.push(chosen);
+      li = chosen.l2;
+      idx = chosen.i2;
+    }
+    return path;
+  }
+
+  var sentence = "Ogni parola arriva solo dopo migliaia di calcoli silenziosi . Il significato non è conservato , è ricostruito ogni volta , a partire da schemi di probabilità . Quello che leggi ora non è stato scritto , è germogliato , parola dopo parola , da tutto ciò che è venuto prima .";
+  var tokens = sentence.split(' ');
+  var tokenIndex = 0;
+  var wordSpans = [];
+  var caretEl = null;
+
+  function setupText(){
+    textEl.innerHTML = '';
+    wordSpans = [];
+    tokens.forEach(function(tok){
+      var span = document.createElement('span');
+      span.className = 'word';
+      var isPunct = /^[.,!?;:]$/.test(tok);
+      span.textContent = isPunct ? tok : tok + ' ';
+      textEl.appendChild(span);
+      wordSpans.push(span);
+    });
+    caretEl = document.createElement('span');
+    caretEl.className = 'caret';
+    textEl.appendChild(caretEl);
+  }
+
+  function onTokenReached(){
+    if (tokenIndex >= wordSpans.length){
+      setTimeout(restartCycle, 2200);
+      return;
+    }
+    var span = wordSpans[tokenIndex];
+    span.classList.add('show','flash');
+    setTimeout(function(){ span.classList.remove('flash'); }, 420);
+    if (caretEl) textEl.appendChild(caretEl);
+    tokenIndex++;
+
+    var outNode = layers[layers.length-1][0];
+    outNode.glow = 1;
+
+    if (tokenIndex < wordSpans.length){
+      var delay = reduceMotion ? 60 : (160 + Math.random()*120);
+      setTimeout(startPulse, delay);
+    } else {
+      if (caretEl) caretEl.remove();
+      setTimeout(restartCycle, 2600);
+    }
+  }
+
+  function restartCycle(){
+    setupText();
+    tokenIndex = 0;
+    startPulse();
+  }
+
+  function startPulse(){
+    var path = buildPath();
+    if (path.length === 0){
+      setTimeout(startPulse, 50);
+      return;
+    }
+    activePulse = {
+      path: path,
+      seg: 0,
+      t: 0,
+      speed: reduceMotion ? 1 : (0.045 + Math.random()*0.02)
+    };
+  }
+
+  var ambientTimer = null;
+  function startAmbient(){
+    if (reduceMotion) return;
+    ambientTimer = setInterval(spawnAmbient, 140);
+  }
+
+  function init(){
+    layout();
+    buildEdges();
+    setupText();
+    draw();
+    startAmbient();
+    setTimeout(startPulse, 600);
+  }
+
+  var resizeT = null;
+  window.addEventListener('resize', function(){
+    clearTimeout(resizeT);
+    resizeT = setTimeout(function(){
+      layout();
+      buildEdges();
+    }, 150);
+  });
+
+  init();
+
+})();
+</script>
+
+</body>
+</html>
