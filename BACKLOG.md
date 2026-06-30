@@ -40,3 +40,4 @@ Safari renders the animation slightly slower than Chrome, mainly due to per-fram
 - Korean, footer credit, visit counter (CountAPI → Abacus)
 - Secular peace/brotherhood/love message across all languages
 - Manual language selector, play/pause control, Open Graph preview image
+- Page-wide ambient background (drifting particles + radial glow), chosen after comparing 5 candidate treatments
