@@ -199,8 +199,15 @@
   }
 
   .output{
-    min-height:190px;
+    position:relative;
+    min-height:var(--output-min-height, 190px);
     padding:4px 2px;
+  }
+  .text.measure{
+    position:absolute;
+    top:0; left:0; right:0;
+    visibility:hidden;
+    pointer-events:none;
   }
   .footer{
     margin-top:18px;
@@ -327,6 +334,7 @@
   <div class="output">
     <div class="output-label" id="outputLabel">generated text</div>
     <div class="text" id="text"></div>
+    <div class="text measure" id="textMeasure" aria-hidden="true"></div>
   </div>
 
   <div class="footer">
@@ -804,6 +812,29 @@
   var bgParticles = [];
   var bgW = 0, bgH = 0, bgDPR = 1;
 
+  function reserveOutputHeight(){
+    var measureEl = document.getElementById('textMeasure');
+    if (!measureEl) return;
+    var maxH = 0;
+    LANGS.forEach(function(lang){
+      measureEl.classList.toggle('cjk', !!lang.cjk);
+      measureEl.classList.toggle('nospace', lang.split === 'char');
+      measureEl.setAttribute('dir', lang.rtl ? 'rtl' : 'ltr');
+      measureEl.innerHTML = '';
+      var toks = lang.split === 'char' ? lang.text.split('') : lang.text.split(' ');
+      toks.forEach(function(tok){
+        var span = document.createElement('span');
+        span.className = 'word show';
+        span.textContent = tok;
+        measureEl.appendChild(span);
+      });
+      var h = measureEl.offsetHeight;
+      if (h > maxH) maxH = h;
+    });
+    measureEl.innerHTML = '';
+    document.documentElement.style.setProperty('--output-min-height', (maxH + 28) + 'px');
+  }
+
   function layoutBg(){
     bgDPR = Math.min(window.devicePixelRatio || 1, 2);
     bgW = window.innerWidth;
@@ -880,6 +911,7 @@
     buildEdges();
     langIndex = detectLang();
     buildLangRow();
+    reserveOutputHeight();
     setupText();
     draw();
     startAmbient();
@@ -891,6 +923,10 @@
     buildBgParticles();
     buildBgField();
     drawBg();
+
+    if (document.fonts && document.fonts.ready){
+      document.fonts.ready.then(reserveOutputHeight);
+    }
   }
 
   var resizeT = null;
@@ -902,6 +938,7 @@
       layoutBg();
       buildBgParticles();
       buildBgField();
+      reserveOutputHeight();
     }, 150);
   });
 

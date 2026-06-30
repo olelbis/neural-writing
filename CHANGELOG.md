@@ -10,6 +10,7 @@ All notable changes to this project are documented here.
 ### Fixed
 - `overflow:hidden` on `html,body` was clipping content taller than the viewport — as controls, footer, and the share row were added, the page outgrew a single screen height and the bottom was getting cut off entirely. Switched to natural scrolling.
 - Layout shift bug: the page was vertically centered, so when generated text wrapped to a different number of lines across languages (especially Chinese, Arabic, Hebrew), the whole layout — including the network diagram — would jump up or down. Anchored the page to the top instead and reserved more height for the text area.
+- Footer still shifting between languages after the above fix: the text area now reserves the maximum height needed across all 11 languages (measured at load and on resize via a hidden clone), so the footer stays put as the language cycles.
 
 ## [1.4.0] — 2026-06-30 — Ambient background
 
