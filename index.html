@@ -46,6 +46,33 @@
     justify-content:center;
     min-height:100vh;
     padding:32px 16px;
+    position:relative;
+    overflow-x:hidden;
+  }
+
+  #bgfx{
+    position:fixed;
+    inset:0;
+    width:100%;
+    height:100%;
+    z-index:0;
+    pointer-events:none;
+  }
+  #bgglow{
+    position:fixed;
+    inset:-20%;
+    z-index:0;
+    pointer-events:none;
+    background:radial-gradient(circle at 30% 40%, rgba(110,231,216,0.05), transparent 55%);
+    background-size:200% 200%;
+    animation:driftglow 22s ease-in-out infinite;
+  }
+  @keyframes driftglow{
+    0%,100%{ background-position:30% 40%; }
+    50%{ background-position:70% 60%; }
+  }
+  @media (prefers-reduced-motion: reduce){
+    #bgglow{ animation:none; }
   }
 
   .stage{
@@ -54,6 +81,8 @@
     display:flex;
     flex-direction:column;
     gap:0;
+    position:relative;
+    z-index:1;
   }
 
   .header-row{
@@ -269,6 +298,9 @@
 </style>
 </head>
 <body>
+
+<canvas id="bgfx"></canvas>
+<div id="bgglow"></div>
 
 <div class="stage">
   <div class="header-row">
@@ -761,6 +793,50 @@
       });
   }
 
+  var bgCanvas = document.getElementById('bgfx');
+  var bgCtx = bgCanvas.getContext('2d');
+  var bgParticles = [];
+  var bgW = 0, bgH = 0, bgDPR = 1;
+
+  function layoutBg(){
+    bgDPR = Math.min(window.devicePixelRatio || 1, 2);
+    bgW = window.innerWidth;
+    bgH = window.innerHeight;
+    bgCanvas.width = bgW * bgDPR;
+    bgCanvas.height = bgH * bgDPR;
+    bgCtx.setTransform(bgDPR,0,0,bgDPR,0,0);
+  }
+
+  function buildBgParticles(){
+    var count = reduceMotion ? 0 : Math.round((bgW*bgH) / 26000);
+    count = Math.min(count, 90);
+    bgParticles = [];
+    for (var i=0;i<count;i++){
+      bgParticles.push({
+        x: Math.random()*bgW,
+        y: Math.random()*bgH,
+        r: 0.6 + Math.random()*1.2,
+        vx: (Math.random()-0.5)*0.035,
+        vy: (Math.random()-0.5)*0.035,
+        a: 0.10 + Math.random()*0.22
+      });
+    }
+  }
+
+  function drawBg(){
+    bgCtx.clearRect(0,0,bgW,bgH);
+    bgParticles.forEach(function(p){
+      p.x += p.vx; p.y += p.vy;
+      if (p.x < -5) p.x = bgW+5; if (p.x > bgW+5) p.x = -5;
+      if (p.y < -5) p.y = bgH+5; if (p.y > bgH+5) p.y = -5;
+      bgCtx.beginPath();
+      bgCtx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      bgCtx.fillStyle = 'rgba(236,234,227,'+p.a+')';
+      bgCtx.fill();
+    });
+    requestAnimationFrame(drawBg);
+  }
+
   function init(){
     layout();
     buildEdges();
@@ -772,6 +848,10 @@
     setTimeout(startPulse, 600);
     loadVisitCounter();
     document.getElementById('playBtn').addEventListener('click', togglePause);
+
+    layoutBg();
+    buildBgParticles();
+    drawBg();
   }
 
   var resizeT = null;
@@ -780,6 +860,8 @@
     resizeT = setTimeout(function(){
       layout();
       buildEdges();
+      layoutBg();
+      buildBgParticles();
     }, 150);
   });
 

@@ -4,6 +4,9 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+### Added
+- Page-wide ambient background: a sparse field of slow-drifting particles plus a very subtle drifting radial glow, sitting behind the whole page (not just the network diagram). Picked after comparing 5 candidate treatments. Disabled when `prefers-reduced-motion` is set.
+
 ## [1.3.0] — 2026-06-30 — Controls and sharing
 
 ### Added
