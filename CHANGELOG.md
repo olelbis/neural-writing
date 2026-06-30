@@ -4,8 +4,13 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+## [1.4.0] — 2026-06-30 — Ambient background
+
 ### Added
-- Page-wide ambient background combining all four candidate treatments: slow-drifting particles, a drifting radial glow, sinuous field lines, and a barely-visible grain texture — sitting behind the whole page, not just the network diagram. Disabled (particles/lines) or static where appropriate when `prefers-reduced-motion` is set.
+- Page-wide ambient background: slow-drifting particles, sinuous field lines, and a barely-visible grain texture, sitting behind the whole page (not just the network diagram). Disabled or static where appropriate when `prefers-reduced-motion` is set.
+
+### Removed
+- Dropped the ambient radial glow from the background combination — kept particles, field lines, and grain only.
 
 ## [1.3.0] — 2026-06-30 — Controls and sharing
 
