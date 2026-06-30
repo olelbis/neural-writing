@@ -2,6 +2,14 @@
 
 All notable changes to this project are documented here.
 
+## [1.6.0] — 2026-06-30 — Fixed footer
+
+### Changed
+- Replaced all the height-measurement/font-preload machinery (hidden clone, ratchet, explicit font loads) with a much simpler fix: the footer is now `position:fixed` to the bottom of the viewport, on its own layer, completely decoupled from the generated text's height. No language can ever shift it again, regardless of wrapping or font-loading timing.
+
+### Removed
+- The output-height measurement system (`reserveOutputHeight`, `watchLiveTextHeight`, `preloadScriptFonts`, the hidden `.text.measure` clone) — no longer needed.
+
 ## [1.5.0] — 2026-06-30 — Sharing and layout stability
 
 ### Added
